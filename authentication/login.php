@@ -1,13 +1,10 @@
 <?php
-// Include the Composer autoloader
-require_once '../vendor/autoload.php';  // Adjust the path if needed
 
-use Firebase\JWT\JWT;
 include("../db.php");
+include("GenerateAJWT.php");
+$error_message = ''; 
 
-$error_message = ''; // Initialize error message variable
-
-$secret_key = "ridachaanoun";  // Same secret key used for encoding the token
+$secret_key = "ridachaanoun";
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['login'])) {
     $email = htmlspecialchars($_POST['email']);
@@ -19,15 +16,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['login'])) {
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($user && password_verify($password, $user['pass_word'])) {
+            $header = ['alg' => 'sha256', 'typ' => 'JWT'] ;
             // Generate a JWT token
             $payload = [
                 "iss" => "http://localhost:8000",
                 "iat" => time(),
                 "exp" => time() + 3600, // Token expires in 1 hour
-                "email" => $user['Email']
+                "email" => $email 
             ];
-
-            $token = JWT::encode($payload, $secret_key, 'HS256');
+            $token = createJwt($header, $payload, $secret_key);
             // Set token in a secure cookie
 
             setcookie("auth_token", $token, time() + 3600, "/", "", false, true); // HTTP-only cookie
